@@ -1,5 +1,6 @@
 # Default parameters
 BOARD ?= EVK-PRE-FALL-H523
+export BOARD
 CONFIG ?= Debug
 JOBS ?= 12
 EXECUTABLE_NAME = $(BOARD)
@@ -40,16 +41,8 @@ ifeq ($(filter $(CONFIG),$(VALID_CONFIGS)),)
 $(error "ERROR: Invalid CONFIG set. Available Configurations : $(VALID_CONFIGS)")
 endif
 
-ifeq ($(findstring g473,$(BOARD)),g473)
-	JLINK_DEVICE = STM32G473RE
-endif
-
-ifeq ($(findstring ra6m4,$(BOARD)),ra6m4)
-	JLINK_DEVICE = R7FA6M4AF3CFM
-endif
-
-ifeq ($(findstring h743,$(BOARD)),h743)
-	JLINK_DEVICE = STM32H743ZG
+ifeq ($(findstring g473,$(BOARD)),H523)
+	JLINK_DEVICE = STM32H523CE
 endif
 
 # The build directory will be build/<board>/<config>
@@ -72,7 +65,7 @@ configure:
 	@echo ""
 	@mkdir -p $(BUILD_DIR)
 # @cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(CONFIG) -DBOARD=$(BOARD) ../../..
-	@cmake -G Ninja -DGIT_HASH=$(HASH) -DCMAKE_BUILD_TYPE=$(CONFIG) -DBOARD=$(BOARD) -B${BUILD_DIR}
+	@cmake --preset $(CONFIG) -DGIT_HASH=$(HASH) -DBOARD=$(BOARD)
 #copy compile_commands.json file to project root to make intellsense happy
 	@echo "Copying compile_commands.json to project root"
 	@cp ${BUILD_DIR}/compile_commands.json .
@@ -80,7 +73,7 @@ configure:
 # Build the project
 build:
 # $(MAKE) -C $(BUILD_DIR) -j${JOBS}
-	cmake --build ${BUILD_DIR} --parallel
+	cmake --build --preset $(CONFIG) --parallel ${JOBS}
 
 .PHONY: static-analysis
 static-analysis: configure build
