@@ -42,7 +42,7 @@
         }
     },
     "activations_alignment": 4,
-    "arguments": "generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace140484481111320012076665502750937509 --output C:/Users/binghui.lai/.stm32cubemx/network_output",
+    "arguments": "generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace148705069232640018252721119468604822 --output C:/Users/binghui.lai/.stm32cubemx/network_output",
     "c_activations_count": 1,
     "c_arrays": [
         {
@@ -421,7 +421,7 @@
         ]
     },
     "data_alignment": 4,
-    "date_time": "2026-01-29T15:14:25+0800",
+    "date_time": "2026-01-30T14:04:35+0800",
     "inputs": [
         "input_1_output"
     ],

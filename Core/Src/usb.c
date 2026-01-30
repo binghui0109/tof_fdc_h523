@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usb.h"
+
 /* USER CODE BEGIN 0 */
 USBD_HandleTypeDef hUsbDeviceFS;
 extern USBD_DescriptorsTypeDef Class_Desc;

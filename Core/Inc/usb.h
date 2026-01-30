@@ -34,7 +34,7 @@ extern "C" {
 /* USER CODE END Includes */
 
 extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
-extern USBD_HandleTypeDef hUsbDeviceFS;
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
