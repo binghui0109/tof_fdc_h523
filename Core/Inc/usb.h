@@ -42,6 +42,7 @@ extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 void MX_USB_PCD_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE END Prototypes */
 
