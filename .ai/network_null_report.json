@@ -1,7 +1,7 @@
 {
     "_allocate_inputs": 4,
     "_allocate_outputs": 4,
-    "cli_parameters": "generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace148705069232640018252721119468604822 --output C:/Users/binghui.lai/.stm32cubemx/network_output",
+    "cli_parameters": "generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace14908235620346003385648692254083070 --output C:/Users/binghui.lai/.stm32cubemx/network_output",
     "cli_version": {
         "extra": "19894",
         "major": 1,
@@ -11,7 +11,7 @@
     "cli_version_str": "1.0.0-19894",
     "code_size": 0,
     "compression": [],
-    "date_time": "2026-01-30T14:04:35+0800",
+    "date_time": "2026-01-30T15:07:24+0800",
     "error": 0,
     "error_str": [],
     "exec_cmd": "generate",

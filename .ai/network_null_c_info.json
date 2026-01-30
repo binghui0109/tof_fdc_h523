@@ -342,35 +342,35 @@
   "environment": {
     "device": null,
     "generated_model": {
-      "generated_time": "2026-01-30T14:04:35+0800",
+      "generated_time": "2026-01-30T15:07:24+0800",
       "model_files": [
         {
           "name": "network_data_params.h",
-          "signature": "0x2d400218c9575f7eaadaddd6c1d0cf41"
+          "signature": "0x15ae3ea868ac5d6b2288d5b72a3330e3"
         },
         {
           "name": "network_data_params.c",
-          "signature": "0x51e93189ddb067dd3878bad72a809e42"
+          "signature": "0x7b750f791f6d37b5564dbb9cfeec2f70"
         },
         {
           "name": "network_data.h",
-          "signature": "0x4e9c62b453b39fb366e2a614b9f9b02b"
+          "signature": "0x11f211c40649d1b7e68880cfc1366572"
         },
         {
           "name": "network_data.c",
-          "signature": "0x9f9efc9b0b78d150a013d13b8adf60e1"
+          "signature": "0xd9e99bc2584064529762c10621023cea"
         },
         {
           "name": "network_config.h",
-          "signature": "0xd710255f20adefa9b1f25c6f63e8e08a"
+          "signature": "0x4100d48706c570cf6dbc1934a20ef5b6"
         },
         {
           "name": "network.h",
-          "signature": "0x66783ab8eb9bb6cadec505d4c69f68fd"
+          "signature": "0x1a1b835b56dfff4aa18df600e2e180b0"
         },
         {
           "name": "network.c",
-          "signature": "0x7a5447e8fc7bbdac248268be6406370e"
+          "signature": "0x48e6e1a19f808413a45a953d6b7081c4"
         }
       ],
       "n_params": null,
@@ -378,11 +378,11 @@
       "size": null,
       "type": null
     },
-    "network_signature": "0x807c7347f80291ff",
+    "network_signature": "0x276eea6032b8f655",
     "test_name": "",
     "tools": [
       {
-        "arguments": "generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace148705069232640018252721119468604822 --output C:/Users/binghui.lai/.stm32cubemx/network_output",
+        "arguments": "generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace14908235620346003385648692254083070 --output C:/Users/binghui.lai/.stm32cubemx/network_output",
         "environment": [
           "STATS_TYPE=X-CUBE-AI"
         ],

@@ -1,30 +1,30 @@
 ST Edge AI Core v1.0.0-19894
-Created date          : 2026-01-30 14:04:35
-Parameters            : generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace148705069232640018252721119468604822 --output C:/Users/binghui.lai/.stm32cubemx/network_output
+Created date          : 2026-01-30 15:07:24
+Parameters            : generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace14908235620346003385648692254083070 --output C:/Users/binghui.lai/.stm32cubemx/network_output
 
 Exec/report summary (generate)
---------------------------------------------------------------------------------------------------------------------
-model file         :   C:\Users\binghui.lai\ToF_CubeAI\aztech_demo\ToF_model_time_series_people_demo.h5             
-type               :   keras                                                                                        
-c_name             :   network                                                                                      
-compression        :   none                                                                                         
-options            :   allocate-inputs, allocate-outputs                                                            
-optimization       :   balanced                                                                                     
-target/series      :   stm32h5                                                                                      
-workspace dir      :   C:\Users\binghui.lai\AppData\Local\Temp\mxAI_workspace148705069232640018252721119468604822   
-output dir         :   C:\Users\binghui.lai\.stm32cubemx\network_output                                             
-model_fmt          :   float                                                                                        
-model_name         :   ToF_model_time_series_people_demo                                                            
-model_hash         :   0xcf3de3874454318ea472204b4b7b62e8                                                           
-params #           :   299 items (1.17 KiB)                                                                         
---------------------------------------------------------------------------------------------------------------------
-input 1/1          :   'input_1', f32(1x8x8x1), 256 Bytes, activations                                              
-output 1/1         :   'dense', f32(1x3), 12 Bytes, activations                                                     
-macc               :   3,440                                                                                        
-weights (ro)       :   1,196 B (1.17 KiB) (1 segment)                                                               
-activations (rw)   :   932 B (932 B) (1 segment) *                                                                  
-ram (total)        :   932 B (932 B) = 932 + 0 + 0                                                                  
---------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------
+model file         :   C:\Users\binghui.lai\ToF_CubeAI\aztech_demo\ToF_model_time_series_people_demo.h5            
+type               :   keras                                                                                       
+c_name             :   network                                                                                     
+compression        :   none                                                                                        
+options            :   allocate-inputs, allocate-outputs                                                           
+optimization       :   balanced                                                                                    
+target/series      :   stm32h5                                                                                     
+workspace dir      :   C:\Users\binghui.lai\AppData\Local\Temp\mxAI_workspace14908235620346003385648692254083070   
+output dir         :   C:\Users\binghui.lai\.stm32cubemx\network_output                                            
+model_fmt          :   float                                                                                       
+model_name         :   ToF_model_time_series_people_demo                                                           
+model_hash         :   0xcf3de3874454318ea472204b4b7b62e8                                                          
+params #           :   299 items (1.17 KiB)                                                                        
+-------------------------------------------------------------------------------------------------------------------
+input 1/1          :   'input_1', f32(1x8x8x1), 256 Bytes, activations                                             
+output 1/1         :   'dense', f32(1x3), 12 Bytes, activations                                                    
+macc               :   3,440                                                                                       
+weights (ro)       :   1,196 B (1.17 KiB) (1 segment)                                                              
+activations (rw)   :   932 B (932 B) (1 segment) *                                                                 
+ram (total)        :   932 B (932 B) = 932 + 0 + 0                                                                 
+-------------------------------------------------------------------------------------------------------------------
 (*) 'input'/'output' buffers can be used from the activations buffer
 
 Model name - ToF_model_time_series_people_demo
