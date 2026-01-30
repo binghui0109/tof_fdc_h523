@@ -24,6 +24,9 @@ set(CMAKE_PROJECT_NAME fdc_h5_tof)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+set(HOME ${CMAKE_CURRENT_SOURCE_DIR})
+set(USB_DIR ${HOME}/USB)
+set(APP ${HOME}/src)
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
@@ -42,14 +45,25 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
-# Add sources to executable
+file(GLOB_RECURSE VENDOR_SOURCES CONFIGURE_DEPENDS
+    ${USB_DIR}/Class/CDC/Src/*.c
+    ${USB_DIR}/Core/Src/*.c
+    ${HOME}/Core/Src/mpu.c
+    ${APP}/app/*.c
+    ${APP}/bsp/*.c
+)
+
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+    ${VENDOR_SOURCES}
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+# Add user defined include paths
+    ${USB_DIR}/Class/CDC/Inc
+    ${USB_DIR}/Core/Inc
+    ${APP}/bsp
+    ${APP}/app
 )
 
 # Add project symbols (macros)
