@@ -19,9 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usb.h"
-
 /* USER CODE BEGIN 0 */
-
+USBD_HandleTypeDef hUsbDeviceFS;
+extern USBD_DescriptorsTypeDef Class_Desc;
 /* USER CODE END 0 */
 
 PCD_HandleTypeDef hpcd_USB_DRD_FS;
@@ -32,7 +32,7 @@ void MX_USB_PCD_Init(void)
 {
 
   /* USER CODE BEGIN USB_Init 0 */
-
+  hpcd_USB_DRD_FS.pData = &hUsbDeviceFS;
   /* USER CODE END USB_Init 0 */
 
   /* USER CODE BEGIN USB_Init 1 */
@@ -54,7 +54,17 @@ void MX_USB_PCD_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USB_Init 2 */
+  if(USBD_Init(&hUsbDeviceFS, &Class_Desc, 0) != USBD_OK)
+        Error_Handler();
 
+  if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_CDC) != USBD_OK)
+        Error_Handler();
+
+  if(USBD_CDC_RegisterInterface(&hUsbDeviceFS, &USBD_CDC_fops) != USBD_OK)
+        Error_Handler();
+
+  if(USBD_Start(&hUsbDeviceFS) != USBD_OK)
+        Error_Handler();
   /* USER CODE END USB_Init 2 */
 
 }
