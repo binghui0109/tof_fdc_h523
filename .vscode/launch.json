@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "EVK-PRE-FALL-H523",
+            "cwd": "${workspaceFolder}",
+            "executable": "./build/EVK-PRE-FALL-H523/Debug/fdc_h5_tof.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "jlink",
+            "device": "STM32H523CE",
+            "toolchainPath": "${workspaceFolder}/tools/gcc/bin",
+            "ipAddress": "192.168.1.105"
+        }
+    ]
+}

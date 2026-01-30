@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+		"label": "Build EVK-PRE-FALL-H523 (Debug)",
+		"type": "shell",
+		"command": "make BOARD=EVK-PRE-FALL-H523 CONFIG=Debug",
+		"problemMatcher": [],
+		"group": {
+			"kind": "build",
+			"isDefault": true
+		}
+		},
+	]
+}
