@@ -25,7 +25,6 @@ set(CMAKE_PROJECT_NAME fdc_h5_tof)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 set(HOME ${CMAKE_CURRENT_SOURCE_DIR})
-set(USB_DIR ${HOME}/USB)
 set(APP ${HOME}/src)
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
@@ -46,9 +45,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 file(GLOB_RECURSE VENDOR_SOURCES CONFIGURE_DEPENDS
-    ${USB_DIR}/Class/CDC/Src/*.c
-    ${USB_DIR}/Core/Src/*.c
+    ${HOME}/USB/Class/CDC/Src/*.c
+    ${HOME}/USB/Core/Src/*.c
     ${HOME}/Core/Src/mpu.c
+    ${HOME}/Drivers/VL53L5CX_ULD_API/Src
     ${APP}/app/*.c
     ${APP}/bsp/*.c
 )
@@ -60,8 +60,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add user defined include paths
-    ${USB_DIR}/Class/CDC/Inc
-    ${USB_DIR}/Core/Inc
+    ${HOME}/USB/Class/CDC/Inc
+    ${HOME}/USB/Core/Inc
+    ${HOME}/Drivers/VL53L5CX_ULD_API/Inc
     ${APP}/bsp
     ${APP}/app
 )
