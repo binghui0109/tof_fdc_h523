@@ -48,7 +48,7 @@ file(GLOB_RECURSE VENDOR_SOURCES CONFIGURE_DEPENDS
     ${HOME}/usb/Class/CDC/Src/*.c
     ${HOME}/usb/Core/Src/*.c
     ${HOME}/vendor/Core/Src/mpu.c
-    ${HOME}/driver/VL53L5CX_ULD_API/Src
+    ${HOME}/driver/VL53L5CX_ULD_API/src/*.c
     ${APP}/app/*.c
     ${APP}/bsp/*.c
 )
@@ -62,7 +62,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add user defined include paths
     ${HOME}/usb/Class/CDC/Inc
     ${HOME}/usb/Core/Inc
-    ${HOME}/driver/VL53L5CX_ULD_API/Inc
+    ${HOME}/driver/VL53L5CX_ULD_API/inc
     ${APP}/bsp
     ${APP}/app
 )
