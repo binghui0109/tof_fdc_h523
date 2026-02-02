@@ -37,7 +37,7 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
-add_subdirectory(cmake/stm32cubemx)
+add_subdirectory(vendor/cmake/stm32cubemx)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -45,10 +45,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 file(GLOB_RECURSE VENDOR_SOURCES CONFIGURE_DEPENDS
-    ${HOME}/USB/Class/CDC/Src/*.c
-    ${HOME}/USB/Core/Src/*.c
-    ${HOME}/Core/Src/mpu.c
-    ${HOME}/Drivers/VL53L5CX_ULD_API/Src
+    ${HOME}/usb/Class/CDC/Src/*.c
+    ${HOME}/usb/Core/Src/*.c
+    ${HOME}/vendor/Core/Src/mpu.c
+    ${HOME}/driver/VL53L5CX_ULD_API/Src
     ${APP}/app/*.c
     ${APP}/bsp/*.c
 )
@@ -60,9 +60,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add user defined include paths
-    ${HOME}/USB/Class/CDC/Inc
-    ${HOME}/USB/Core/Inc
-    ${HOME}/Drivers/VL53L5CX_ULD_API/Inc
+    ${HOME}/usb/Class/CDC/Inc
+    ${HOME}/usb/Core/Inc
+    ${HOME}/driver/VL53L5CX_ULD_API/Inc
     ${APP}/bsp
     ${APP}/app
 )

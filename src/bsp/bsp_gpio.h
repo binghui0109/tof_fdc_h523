@@ -15,6 +15,10 @@ typedef enum {
     BSP_GPIO_RESET
 }BSP_GPIO_STATE;
 
+typedef void (*gpio_exit_cb_t)(void);
+
+void bsp_gpio_exit_register_cb(gpio_exit_cb_t cb, uint16_t pin);
+
 extern bsp_gpio_t led1_gpio;
 extern bsp_gpio_t led2_gpio;
 extern bsp_gpio_t led3_gpio;
