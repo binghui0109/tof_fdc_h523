@@ -1,26 +1,25 @@
-#include "bsp_serial.h"
-#include "main.h"
-#include "bsp_led.h"
+#include "app_main.h"
+
+#include <stdint.h>
+
 #include "bsp_btn.h"
-#include "bsp_gpio.h"
+#include "bsp_led.h"
+#include "bsp_serial.h"
 #include "sensor_manager.h"
-#include "ai_manager.h"
+#include "tof_process.h"
 
-typedef enum{
-    TOF_PROCESS_STATE,
-    // BG_INIT_STATE,
-    DATA_REC_STATE,
-} tof_state_t;
+typedef enum {
+    APP_STATE_TOF_PIPELINE = 0,
+    APP_STATE_DATA_RECORD,
+} app_state_t;
 
-tof_state_t tof_state = TOF_PROCESS_STATE;
-uint8_t TxMessageBuffer[] = "MY USB IS WORKING! \r\n";
-int16_t* tof_buf = NULL;
-//   while(hUsbDeviceFS.pClassData == NULL);
+static app_state_t s_app_state = APP_STATE_TOF_PIPELINE;
+static uint8_t s_btn_msg[] = "Background reinit\r\n";
 
-
-void btn1_cb()
+static void app_btn1_rising_cb(void)
 {
-    bsp_serial_tx_data(TxMessageBuffer, sizeof(TxMessageBuffer));
+    tof_restart_background_collection();
+    bsp_serial_tx_data(s_btn_msg, sizeof(s_btn_msg) - 1U);
 }
 
 void app_init(void)
@@ -28,28 +27,22 @@ void app_init(void)
     bsp_serial_init();
     led_init();
     btn_init();
+    reg_btn_pos_edge_cb(BTN1, app_btn1_rising_cb);
+
     sensor_init();
     tof_data_process_init();
-}
-
-void change_tof_state(tof_state_t state)
-{
-    tof_state = state;
 }
 
 void app_main(void)
 {
     sensor_get_data();
-    switch (tof_state)
-    {
-    case TOF_PROCESS_STATE:
+
+    switch (s_app_state) {
+    case APP_STATE_TOF_PIPELINE:
         tof_data_process();
         break;
-    // case BG_INIT_STATE:
-    //     bg_collect();
-        break;
-    case DATA_REC_STATE:
+    case APP_STATE_DATA_RECORD:
+    default:
         break;
     }
-    // handle_data_request();
-}               
+}

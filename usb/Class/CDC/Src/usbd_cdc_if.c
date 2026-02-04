@@ -23,6 +23,7 @@ EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
+#include "bsp_usb_cdc.h"
 
 
 /* Create buffer for reception and transmission           */
@@ -214,6 +215,7 @@ static int8_t CDC_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length)
   */
 static int8_t CDC_Receive(uint8_t *Buf, uint32_t *Len)
 {
+      cdc_rx_handler(Buf, *Len);
       USBD_CDC_ReceivePacket(&hUsbDeviceFS);
       return (USBD_OK);
 }
@@ -234,6 +236,7 @@ static int8_t CDC_TransmitCplt(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
   UNUSED(Buf);
   UNUSED(Len);
   UNUSED(epnum);
+  tx_cplt_cb();
 
   return (0);
 }
@@ -245,6 +248,9 @@ uint8_t CDC_Transmit(uint8_t* Buf, uint16_t Len)
 {
   uint8_t result = USBD_OK;
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+  if (hcdc == NULL) {
+    return USBD_FAIL;
+  }
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
