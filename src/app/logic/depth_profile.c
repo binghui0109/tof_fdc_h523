@@ -6,7 +6,7 @@
 
 #include "segmentation.h"
 
-static float depth_profile_scale(const tof_component_t *comp, int row)
+static float depth_profile_regional_scale(const tof_component_t *comp, int row)
 {
     if ((row > 3) || (comp->second_max_distance_mm <= comp->min_distance_mm)) {
         return 1.0f;
@@ -74,10 +74,6 @@ void depth_profile_generate(const uint16_t frame_mm[TOF_ROWS][TOF_COLS],
                             uint8_t *component_count,
                             uint8_t combined_profile[TOF_ROWS][TOF_COLS])
 {
-    if ((frame_mm == NULL) || (labels == NULL) || (components == NULL) ||
-        (component_count == NULL) || (combined_profile == NULL)) {
-        return;
-    }
 
     memset(combined_profile, 0, sizeof(uint8_t) * TOF_ROWS * TOF_COLS);
 
@@ -90,7 +86,7 @@ void depth_profile_generate(const uint16_t frame_mm[TOF_ROWS][TOF_COLS],
                     continue;
                 }
 
-                float scale = depth_profile_scale(&components[c], row);
+                float scale = depth_profile_regional_scale(&components[c], row);
                 uint16_t distance = (uint16_t)lroundf((float)frame_mm[row][col] * scale);
                 uint16_t local_max = (uint16_t)lroundf((float)components[c].second_max_distance_mm * scale);
 

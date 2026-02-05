@@ -11,6 +11,5 @@ void track_update(const tof_component_t *components,
                   tof_people_data_t *people,
                   tof_person_info_t *person_info,
                   uint8_t *person_info_count);
-void track_smooth_people_count(uint8_t *people_count);
 
 #endif

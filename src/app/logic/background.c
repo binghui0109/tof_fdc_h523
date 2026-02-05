@@ -1,6 +1,6 @@
 #include <string.h>
+#include <math.h>
 #include "background.h"
-
 #define BG_DEFAULT_FRAMES 100U
 #define MIN_VALID_SAMPLES 1U
 
@@ -14,29 +14,6 @@ static uint32_t s_sum_sq[TOF_ROWS][TOF_COLS];
 static uint16_t s_valid_count[TOF_ROWS][TOF_COLS];
 static uint32_t s_max_sum = 0U;
 
-static uint16_t isqrt_u32(uint32_t x)
-{
-    uint32_t op = x;
-    uint32_t res = 0U;
-    uint32_t one = 1UL << 30;
-
-    while (one > op) {
-        one >>= 2;
-    }
-
-    while (one != 0U) {
-        if (op >= (res + one)) {
-            op -= (res + one);
-            res = (res >> 1) + one;
-        } else {
-            res >>= 1;
-        }
-        one >>= 2;
-    }
-
-    return (uint16_t)res;
-}
-
 static void bg_compute(void)
 {
     for (uint8_t row = 0U; row < TOF_ROWS; row++) {
@@ -48,7 +25,7 @@ static void bg_compute(void)
                 uint32_t sq_mean = mean * mean;
                 uint32_t var = (mean_sq > sq_mean) ? (mean_sq - sq_mean) : 0U;
                 bg.mean[row][col] = mean;
-                bg.std[row][col] = isqrt_u32(var);
+                bg.std[row][col] = (uint32_t)(sqrt((float)var));
             } else {
                 bg.std[row][col] = 0U;
                 bg.mean[row][col] = 4000U;
@@ -70,20 +47,19 @@ void bg_reset(void)
     memset(s_valid_count, 0, sizeof(s_valid_count));
 }
 
-bool bg_collect(const VL53L5CX_ResultsData *tof_result)
+void bg_collect(const VL53L5CX_ResultsData *tof_result)
 {
-    if (!s_collecting || (tof_result == NULL)) {
-        return false;
-    }
-
     uint16_t frame_max = 0U;
 
-    for (uint8_t row = 0U; row < TOF_ROWS; row++) {
-        for (uint8_t col = 0U; col < TOF_COLS; col++) {
+    for (uint8_t row = 0U; row < TOF_ROWS; row++) 
+    {
+        for (uint8_t col = 0U; col < TOF_COLS; col++) 
+        {
             uint8_t idx = (uint8_t)(row * TOF_COLS + col);
             uint8_t status = tof_result->target_status[idx];
 
-            if (status == 255U) {
+            if (status == 255U) 
+            {
                 continue;
             }
             uint16_t value = tof_result->distance_mm[idx];
@@ -91,22 +67,14 @@ bool bg_collect(const VL53L5CX_ResultsData *tof_result)
             s_sum[row][col] += value;
             s_sum_sq[row][col] += (uint32_t)value * (uint32_t)value;
 
-            if (((status == 5U) || (status == 9U)) && (value > frame_max)) {
+            if (((status == 5U) || (status == 9U)) && (value > frame_max)) 
+            {
                 frame_max = value;
             }
         }
     }
 
     s_max_sum += frame_max;
-    s_collected_frames++;
-
-    if (s_collected_frames < BG_DEFAULT_FRAMES) {
-        return false;
-    }
-
-    bg_compute();
-    s_collecting = false;
-    return true;
 }
 
 bool is_bg_collecting(void)
@@ -119,13 +87,17 @@ const bg_info_t *bg_get_info(void)
     return &bg;
 }
 
-bg_status_t bg_update(const VL53L5CX_ResultsData *tof_result)
+bool bg_update(const VL53L5CX_ResultsData *tof_result)
 {
-    if (!s_collecting) {
-        return BG_STATUS_READY;
+    if (s_collecting) 
+    {
+        bg_collect(tof_result);
+        s_collected_frames++;
+        if (s_collected_frames == BG_DEFAULT_FRAMES) 
+        {
+            bg_compute();
+            s_collecting = false;
+        }
     }
-    if (bg_collect(tof_result)) {
-        return BG_STATUS_READY_JUST_FINISHED;
-    }
-    return BG_STATUS_COLLECTING;
+    return s_collecting;
 }

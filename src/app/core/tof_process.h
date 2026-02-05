@@ -8,6 +8,8 @@
 
 typedef struct {
     bool background_collecting;
+    uint8_t raw_people_count;
+    uint8_t smoothed_people_count;
     tof_people_data_t people;
     tof_person_info_t person_info[TOF_MAX_TRACKS];
     uint8_t person_info_count;

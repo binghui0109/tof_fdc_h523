@@ -67,6 +67,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${HOME}/middleware/ai
     ${APP}/bsp
     ${APP}/app
+    ${APP}/app/core
+    ${APP}/app/logic
 )
 
 # Add project symbols (macros)

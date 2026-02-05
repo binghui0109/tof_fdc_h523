@@ -34,7 +34,7 @@ void classifier_reset(void)
     s_fall_counter = 0U;
 }
 
-void process_frame_data(const uint16_t filtered_frame_mm[TOF_ROWS][TOF_COLS],
+void preprocess_frame_data(const uint16_t filtered_frame_mm[TOF_ROWS][TOF_COLS],
                         const uint16_t pixel_distance_bg_mm[TOF_ROWS][TOF_COLS],
                         float ai_out[TOF_NUM_CLASSES])
 {

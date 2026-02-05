@@ -180,33 +180,3 @@ void track_update(const tof_component_t *components,
 
     track_collect_people_info(people, person_info, person_info_count);
 }
-
-void track_smooth_people_count(uint8_t *people_count)
-{
-    static uint8_t history[TOF_HISTORY_SIZE] = {0};
-    static uint8_t history_idx = 0U;
-    uint8_t count[256] = {0};
-    uint8_t max_count = 0U;
-    uint8_t most_frequent = 0U;
-
-    if (people_count == NULL) {
-        return;
-    }
-
-    history[history_idx] = *people_count;
-    history_idx = (history_idx + 1U) % TOF_HISTORY_SIZE;
-
-    for (uint16_t i = 0U; i < 256U; i++) {
-        count[i] = 0U;
-    }
-    for (uint8_t i = 0U; i < TOF_HISTORY_SIZE; i++) {
-        count[history[i]]++;
-    }
-    for (uint16_t i = 0U; i < 256U; i++) {
-        if (count[i] > max_count) {
-            max_count = count[i];
-            most_frequent = (uint8_t)i;
-        }
-    }
-    *people_count = most_frequent;
-}

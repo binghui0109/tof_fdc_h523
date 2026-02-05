@@ -90,10 +90,6 @@ uint8_t seg_label_components(const uint16_t frame_mm[TOF_ROWS][TOF_COLS],
     uint16_t visited[TOF_ROWS][TOF_COLS] = {0};
     seg_node_t stack[TOF_ROWS * TOF_COLS];
 
-    if ((frame_mm == NULL) || (labels == NULL) || (components == NULL)) {
-        return 0U;
-    }
-
     for (int row = 0; row < (int)TOF_ROWS; row++) {
         for (int col = 0; col < (int)TOF_COLS; col++) {
             if ((frame_mm[row][col] == 0U) || (labels[row][col] != 0U)) {
