@@ -18,17 +18,76 @@
 #define CONN_CMD_BG_REINIT 0xA1U
 #define CONN_CMD_DISTANCE_STREAM 0xA2U
 
-static bool s_distance_stream_enabled = true;
+static volatile bool s_distance_stream_enabled = true;
 static volatile bool s_request_bg_reinit = false;
 static uint8_t s_tx_buffer[CONN_PACKET_MAX_SIZE];
 
+static bool conn_parse_command(const uint8_t *packet,
+                               uint16_t packet_len,
+                               uint8_t *cmd_type,
+                               uint8_t *cmd_value)
+{
+    uint8_t payload_len;
+    uint8_t expected_checksum = 0U;
+    uint8_t received_checksum;
+    uint16_t min_packet_len;
+    uint16_t footer_idx;
+
+    if ((packet == NULL) || (cmd_type == NULL) || (cmd_value == NULL) || (packet_len < 11U)) {
+        return false;
+    }
+    if (memcmp(packet, "FUT0", 4) != 0) {
+        return false;
+    }
+
+    payload_len = packet[5];
+    min_packet_len = (uint16_t)(payload_len + 11U);
+    if ((packet_len != min_packet_len) &&
+        !((packet_len == (uint16_t)(min_packet_len + 1U)) && (packet[min_packet_len] == '\n'))) {
+        return false;
+    }
+
+    footer_idx = (uint16_t)(7U + payload_len);
+    if (memcmp(&packet[footer_idx], "END0", 4) != 0) {
+        return false;
+    }
+    if (payload_len < 1U) {
+        return false;
+    }
+
+    for (uint16_t i = 4U; i < (uint16_t)(6U + payload_len); i++) {
+        expected_checksum ^= packet[i];
+    }
+    received_checksum = packet[6U + payload_len];
+    if (expected_checksum != received_checksum) {
+        return false;
+    }
+
+    *cmd_type = packet[4];
+    *cmd_value = packet[6];
+    return true;
+}
+
 static void conn_rx_callback(uint8_t *packet, uint32_t packet_len)
 {
-    bool request_bg_reinit = false;
+    uint8_t cmd_type;
+    uint8_t cmd_value;
 
-    if (conn_handle_command(packet, (uint16_t)packet_len, &request_bg_reinit) &&
-        request_bg_reinit) {
+    if (!conn_parse_command(packet, (uint16_t)packet_len, &cmd_type, &cmd_value)) {
+        return;
+    }
+
+    if ((cmd_type == CONN_CMD_BG_REINIT) && (cmd_value == 0x01U)) {
         s_request_bg_reinit = true;
+        return;
+    }
+
+    if (cmd_type == CONN_CMD_DISTANCE_STREAM) {
+        if (cmd_value == 0x01U) {
+            s_distance_stream_enabled = true;
+        } else if (cmd_value == 0x02U) {
+            s_distance_stream_enabled = false;
+        }
     }
 }
 
@@ -185,24 +244,7 @@ void conn_init(void)
     bsp_serial_set_rx_cb(conn_rx_callback);
 }
 
-void conn_set_distance_stream_enabled(bool enabled)
-{
-    s_distance_stream_enabled = enabled;
-}
-
-bool conn_is_distance_stream_enabled(void)
-{
-    return s_distance_stream_enabled;
-}
-
-bool conn_consume_bg_reinit_request(void)
-{
-    bool request = s_request_bg_reinit;
-    s_request_bg_reinit = false;
-    return request;
-}
-
-void conn_send_background_status(bool background_collecting)
+static void conn_send_background_status(bool background_collecting)
 {
     uint8_t payload[8] = {0};
     uint8_t payload_idx = 0U;
@@ -221,10 +263,10 @@ void conn_send_background_status(bool background_collecting)
     conn_send_packet(CONN_TYPE_BUNDLE, payload, payload_idx);
 }
 
-void conn_send_runtime_data(const VL53L5CX_ResultsData *raw_frame,
-                            const tof_people_data_t *people,
-                            const tof_person_info_t *person_info,
-                            uint8_t person_count)
+static void conn_send_runtime_data(const VL53L5CX_ResultsData *raw_frame,
+                                   const tof_people_data_t *people,
+                                   const tof_person_info_t *person_info,
+                                   uint8_t person_count)
 {
     uint8_t payload[200] = {0};
     uint8_t payload_idx = 0U;
@@ -255,59 +297,57 @@ void conn_send_runtime_data(const VL53L5CX_ResultsData *raw_frame,
     conn_send_packet(CONN_TYPE_BUNDLE, payload, payload_idx);
 }
 
-bool conn_handle_command(const uint8_t *packet, uint16_t packet_len, bool *request_bg_reinit)
+static void conn_send_data_frame_record(const VL53L5CX_ResultsData *raw_frame)
 {
-    uint8_t byte_len;
-    uint8_t expected_checksum = 0U;
-    uint8_t received_checksum;
-    uint16_t min_packet_len;
-    uint16_t footer_idx;
+    uint8_t payload[140] = {0};
+    uint8_t payload_idx = 0U;
 
-    if ((packet == NULL) || (packet_len < 11U)) {
-        return false;
+    if (!conn_append_distance_section(raw_frame,
+                                      payload,
+                                      &payload_idx,
+                                      sizeof(payload))) {
+        return;
     }
 
-    if (memcmp(packet, "FUT0", 4) != 0) {
-        return false;
+    conn_send_packet(CONN_TYPE_BUNDLE, payload, payload_idx);
+}
+
+static void conn_send_data_frame_inference(const VL53L5CX_ResultsData *raw_frame,
+                                           const tof_pipeline_output_t *pipeline_output)
+{
+    if ((raw_frame == NULL) || (pipeline_output == NULL)) {
+        return;
     }
 
-    byte_len = packet[5];
-    min_packet_len = (uint16_t)(byte_len + 11U);
-    if ((packet_len != min_packet_len) &&
-        !((packet_len == (uint16_t)(min_packet_len + 1U)) && (packet[min_packet_len] == '\n'))) {
-        return false;
+    if (pipeline_output->background_collecting) {
+        conn_send_background_status(true);
+        return;
     }
 
-    footer_idx = (uint16_t)(7U + byte_len);
-    if (memcmp(&packet[footer_idx], "END0", 4) != 0) {
-        return false;
+    conn_send_runtime_data(raw_frame,
+                           &pipeline_output->people,
+                           pipeline_output->person_info,
+                           pipeline_output->person_info_count);
+}
+
+void conn_process_pending_commands(void)
+{
+    if (s_request_bg_reinit) {
+        s_request_bg_reinit = false;
+        tof_pipeline_restart_background();
+    }
+}
+
+void conn_publish_frame(app_mode_t app_mode,
+                        const VL53L5CX_ResultsData *raw_frame,
+                        const tof_pipeline_output_t *pipeline_output)
+{
+    if (app_mode == APP_MODE_INFERENCE) {
+        conn_send_data_frame_inference(raw_frame, pipeline_output);
+        return;
     }
 
-    for (uint16_t i = 4U; i < (uint16_t)(6U + byte_len); i++) {
-        expected_checksum ^= packet[i];
+    if (app_mode == APP_MODE_DATA_RECORD) {
+        conn_send_data_frame_record(raw_frame);
     }
-    received_checksum = packet[6U + byte_len];
-    if (expected_checksum != received_checksum) {
-        return false;
-    }
-
-    if ((packet[4] == CONN_CMD_BG_REINIT) && (byte_len >= 1U) && (packet[6] == 0x01U)) {
-        if (request_bg_reinit != NULL) {
-            *request_bg_reinit = true;
-        }
-        return true;
-    }
-
-    if ((packet[4] == CONN_CMD_DISTANCE_STREAM) && (byte_len >= 1U)) {
-        if (packet[6] == 0x01U) {
-            conn_set_distance_stream_enabled(true);
-            return true;
-        }
-        if (packet[6] == 0x02U) {
-            conn_set_distance_stream_enabled(false);
-            return true;
-        }
-    }
-
-    return false;
 }

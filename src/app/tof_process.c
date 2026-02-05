@@ -4,14 +4,17 @@
 #include <string.h>
 
 #include "background.h"
+#include "bsp_btn.h"
 #include "bsp_led.h"
 #include "classifier.h"
-#include "connection_manager.h"
 #include "depth_profile.h"
 #include "segmentation.h"
-#include "sensor_manager.h"
 #include "tof_types.h"
 #include "tracking.h"
+
+#define TOF_INVALID_DISTANCE_MM 4000U
+#define TOF_INVALID_STATUS 255U
+#define TOF_BG_STD_GAIN 2U
 
 typedef struct {
     uint16_t filtered_mm[TOF_ROWS][TOF_COLS];
@@ -27,86 +30,79 @@ typedef struct {
 } tof_pipeline_context_t;
 
 static tof_pipeline_context_t s_ctx;
-static bool s_tof_data_ready = false;
-static VL53L5CX_ResultsData *s_tof_ptr = NULL;
 
-static void tof_data_handler(VL53L5CX_ResultsData *buf, uint16_t size);
+static void tof_pipeline_clear_output(tof_pipeline_output_t *output)
+{
+    if (output != NULL) {
+        memset(output, 0, sizeof(*output));
+    }
+}
 
-static void tof_context_reset_runtime(void)
+static void tof_pipeline_reset_context(void)
 {
     memset(&s_ctx, 0, sizeof(s_ctx));
 }
 
-static void tof_prepare_filtered_frame(const VL53L5CX_ResultsData *raw, const bg_info_t *bg_info)
+static void tof_pipeline_reset_runtime_modules(void)
+{
+    track_reset();
+    classifier_reset();
+}
+
+static void tof_pipeline_prepare_filtered_frame(const VL53L5CX_ResultsData *frame,
+                                                const bg_info_t *bg_info)
 {
     for (uint8_t row = 0U; row < TOF_ROWS; row++) {
         for (uint8_t col = 0U; col < TOF_COLS; col++) {
             uint8_t zone_idx = (uint8_t)((row * TOF_COLS) + col);
-            uint16_t idx = (uint16_t)(zone_idx * VL53L5CX_NB_TARGET_PER_ZONE);
-            uint8_t status = raw->target_status[idx];
-            uint16_t distance = raw->distance_mm[idx];
-            uint32_t mean = bg_info->mean[row][col];
-            uint32_t std = bg_info->std[row][col];
-            int32_t delta = (int32_t)mean - (int32_t)distance;
-            uint32_t threshold = std * 2U;
+            uint16_t target_idx = (uint16_t)(zone_idx * VL53L5CX_NB_TARGET_PER_ZONE);
+            uint16_t distance_mm = frame->distance_mm[target_idx];
+            uint8_t status = frame->target_status[target_idx];
+            uint32_t bg_mean = bg_info->mean[row][col];
+            uint32_t bg_std = bg_info->std[row][col];
+            uint32_t threshold = bg_std * TOF_BG_STD_GAIN;
+            int32_t delta = (int32_t)bg_mean - (int32_t)distance_mm;
 
-            if ((distance > 4000U) || (status == 255U) || (delta <= (int32_t)threshold)) {
+            if ((distance_mm > TOF_INVALID_DISTANCE_MM) || (status == TOF_INVALID_STATUS) ||
+                (delta <= (int32_t)threshold)) {
                 s_ctx.filtered_mm[row][col] = 0U;
                 s_ctx.pixel_distance_bg_mm[row][col] = 0U;
             } else {
-                s_ctx.filtered_mm[row][col] = distance;
-                if (bg_info->max > distance) {
-                    s_ctx.pixel_distance_bg_mm[row][col] = (uint16_t)(bg_info->max - distance);
-                } else {
-                    s_ctx.pixel_distance_bg_mm[row][col] = 0U;
-                }
+                s_ctx.filtered_mm[row][col] = distance_mm;
+                s_ctx.pixel_distance_bg_mm[row][col] = (bg_info->max > distance_mm)
+                                                            ? (uint16_t)(bg_info->max - distance_mm)
+                                                            : 0U;
             }
         }
     }
 }
 
-void tof_data_process_init(void)
+static bool tof_pipeline_handle_background_state(bg_status_t bg_status,
+                                                 tof_pipeline_output_t *output)
 {
-    tof_context_reset_runtime();
-    s_tof_data_ready = false;
-    s_tof_ptr = get_tof_buf();
+    if (bg_status == BG_STATUS_COLLECTING) {
+        led_chase_enable();
+        if (output != NULL) {
+            output->background_collecting = true;
+        }
+        return false;
+    }
 
-    bg_start();
-    track_reset();
-    classifier_init();
-    conn_init();
-    subscribe_tof_data(tof_data_handler);
+    if (bg_status == BG_STATUS_READY_JUST_FINISHED) {
+        led_chase_disable();
+        tof_pipeline_reset_context();
+        tof_pipeline_reset_runtime_modules();
+        if (output != NULL) {
+            output->background_collecting = false;
+        }
+        return false;
+    }
+
+    return true;
 }
 
-void tof_data_process(void)
+static void tof_pipeline_run_segmentation_tracking(void)
 {
-    if (conn_consume_bg_reinit_request()) {
-        tof_restart_background_collection();
-    }
-
-    if (!s_tof_data_ready) {
-        return;
-    }
-
-    s_tof_data_ready = false;
-    if (s_tof_ptr == NULL) {
-        return;
-    }
-
-    if (is_bg_collecting()) {
-        led_chase_enable();
-        if (bg_collect(s_tof_ptr)) {
-            led_chase_disable();
-            tof_context_reset_runtime();
-            track_reset();
-            classifier_reset();
-        }
-        conn_send_background_status(is_bg_collecting());
-        return;
-    }
-
-    tof_prepare_filtered_frame(s_tof_ptr, bg_get_info());
-
     seg_clear_labels(s_ctx.labels);
     s_ctx.component_count = seg_label_components(s_ctx.filtered_mm,
                                                  s_ctx.labels,
@@ -126,42 +122,76 @@ void tof_data_process(void)
                  s_ctx.person_info,
                  &s_ctx.person_info_count);
     track_smooth_people_count(&s_ctx.people.people_count);
+}
 
+static void tof_pipeline_update_presence_indicator(void)
+{
     if (s_ctx.people.people_count > 0U) {
         led_on(LED3);
     } else {
         led_off(LED3);
     }
+}
 
+static void tof_pipeline_update_classification(void)
+{
     if (s_ctx.people.people_count == 1U) {
         process_frame_data(s_ctx.filtered_mm, s_ctx.pixel_distance_bg_mm, s_ctx.ai_out);
         s_ctx.people.class_id = ai_output_moving_average(s_ctx.ai_out);
-    } else {
-        memset(s_ctx.ai_out, 0, sizeof(s_ctx.ai_out));
-        (void)ai_output_moving_average(s_ctx.ai_out);
-        s_ctx.people.class_id = 0U;
+        return;
     }
 
-    conn_send_runtime_data(s_tof_ptr,
-                           &s_ctx.people,
-                           s_ctx.person_info,
-                           s_ctx.person_info_count);
+    memset(s_ctx.ai_out, 0, sizeof(s_ctx.ai_out));
+    (void)ai_output_moving_average(s_ctx.ai_out);
+    s_ctx.people.class_id = 0U;
 }
 
-void tof_restart_background_collection(void)
+static void tof_pipeline_fill_output(tof_pipeline_output_t *output)
 {
-    bg_start();
+    if (output == NULL) {
+        return;
+    }
+
+    output->background_collecting = false;
+    output->people = s_ctx.people;
+    output->person_info_count = s_ctx.person_info_count;
+
+    if (s_ctx.person_info_count > 0U) {
+        memcpy(output->person_info,
+               s_ctx.person_info,
+               (size_t)s_ctx.person_info_count * sizeof(tof_person_info_t));
+    }
+}
+
+void tof_pipeline_init(void)
+{
+    tof_pipeline_reset_context();
+    bg_reset();
     track_reset();
-    classifier_reset();
-    tof_context_reset_runtime();
+    classifier_init();
+    reg_btn_pos_edge_cb(BTN1, tof_pipeline_restart_background);
 }
 
-static void tof_data_handler(VL53L5CX_ResultsData *buf, uint16_t size)
+void tof_pipeline_process_frame(const VL53L5CX_ResultsData *frame, tof_pipeline_output_t *output)
 {
-    (void)buf;
-    (void)size;
+    bg_status_t bg_status;
 
-    if (!s_tof_data_ready) {
-        s_tof_data_ready = true;
+    tof_pipeline_clear_output(output);
+    bg_status = bg_update(frame);
+    if (!tof_pipeline_handle_background_state(bg_status, output)) {
+        return;
     }
+
+    tof_pipeline_prepare_filtered_frame(frame, bg_get_info());
+    tof_pipeline_run_segmentation_tracking();
+    tof_pipeline_update_presence_indicator();
+    tof_pipeline_update_classification();
+    tof_pipeline_fill_output(output);
+}
+
+void tof_pipeline_restart_background(void)
+{
+    bg_reset();
+    tof_pipeline_reset_runtime_modules();
+    tof_pipeline_reset_context();
 }

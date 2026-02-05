@@ -58,7 +58,7 @@ static void bg_compute(void)
     bg.max = (s_collected_frames > 0U) ? (uint16_t)(s_max_sum / s_collected_frames) : 0U;
 }
 
-void bg_start(void)
+void bg_reset(void)
 {
     s_collected_frames = 0U;
     s_max_sum = 0U;
@@ -117,4 +117,15 @@ bool is_bg_collecting(void)
 const bg_info_t *bg_get_info(void)
 {
     return &bg;
+}
+
+bg_status_t bg_update(const VL53L5CX_ResultsData *tof_result)
+{
+    if (!s_collecting) {
+        return BG_STATUS_READY;
+    }
+    if (bg_collect(tof_result)) {
+        return BG_STATUS_READY_JUST_FINISHED;
+    }
+    return BG_STATUS_COLLECTING;
 }

@@ -13,8 +13,16 @@ typedef struct {
     uint16_t max;
 } bg_info_t;
 
-void bg_start(void);
+typedef enum {
+    BG_STATUS_INVALID = 0,
+    BG_STATUS_COLLECTING,
+    BG_STATUS_READY_JUST_FINISHED,
+    BG_STATUS_READY,
+} bg_status_t;
+
+void bg_reset(void);
 bool bg_collect(const VL53L5CX_ResultsData *tof_result);
 bool is_bg_collecting(void);
 const bg_info_t *bg_get_info(void);
+bg_status_t bg_update(const VL53L5CX_ResultsData *tof_result);
 #endif
