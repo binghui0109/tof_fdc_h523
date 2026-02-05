@@ -1,0 +1,144 @@
+---
+config:
+  layout: dagre
+  look: neo
+---
+flowchart TB
+ subgraph D1sg["D1: tof_pipeline_process_frame"]
+        D1b["bg_status = bg_update(frame)"]
+        D1a["clear output struct"]
+        D1c["output.background_collecting=true"]
+        LED1["LED handler: chase ON, LED3 OFF"]
+        RET1["return early"]
+        D1d["reset: ctx + track + classifier + presence"]
+        LED2["LED handler: chase OFF, LED3 OFF"]
+        RET2["return early"]
+        D2sg["Foreground Filtering"]
+        D3sg["Segmentation"]
+        D4sg["Depth Profile + Optional Split"]
+        D5sg["Tracking"]
+        D6sg["Presence Logic (raw->smoothed)"]
+        LED3["LED handler: chase OFF, LED3 = presence_detected"]
+        D7sg["Classifier (only if smoothed==1)"]
+        D8sg["Fill output snapshot"]
+  end
+ subgraph D2sg["D2: fg_filter_apply(frame,bg_info,filtered_mm,pixel_distance_bg_mm)"]
+        D2b["read distance_mm + target_status"]
+        D2a["for each zone (row,col) in 8x8"]
+        D2c["threshold_mm = max(2*bg_std_mm, 80mm)"]
+        D2d{"foreground?"}
+        D2e["filtered_mm=0; pixel_distance_bg_mm=0"]
+        D2f["filtered_mm=distance_mm"]
+        D2g["pixel_distance_bg_mm = max(bg_max - distance_mm, 0)"]
+        D2h["Rules: distance_mm &lt;= 4000, status in {5,9}, (bg_mean - distance_mm) &gt; threshold_mm"]
+  end
+ subgraph D3sg["D3: seg_label_components (connect and count blots)"]
+        D3b["scan 8x8 for non-zero pixels not yet labeled"]
+        D3a["labels cleared"]
+        D3c["flood-fill / stack (8-neighbor) to form a component"]
+        D3d["component stats: bbox, size, min/max/second_max distance"]
+        D3e{"size >= 2?"}
+        D3f["discard: clear its labels back to 0"]
+        D3g["keep: component_count++"]
+  end
+ subgraph D4sg["D4: depth_profile_generate (check if one blot contains two person)"]
+        D4b["for each component bbox pixel that matches label"]
+        D4a["init combined_profile=0"]
+        D4c["optional regional scale for top rows"]
+        D4d{"distance &lt;= min + 150mm ?"}
+        D4e["profile=2 (head/near)"]
+        D4f["profile=1 (body)"]
+        D4g["refine: if near local_max-200 => profile=3 else keep 1"]
+        D4h{"if component_count == 1"}
+        D4i["Try split by relabeling: build head_frame where profile==2, seg_label_components(head_frame), if not split build body_frame where profile==1, seg_label_components(body_frame), if still 0 force count=1"]
+  end
+ subgraph D5sg["D5: track_update(components,count,&people, person_info, &person_info_count)"]
+        D5b["build all (component,track) pairs with center distance"]
+        D5a["age all active tracks: inactive_frames++"]
+        D5c["sort pairs by distance"]
+        D5d["greedy match pairs if dist &lt;= 5.0"]
+        D5e["matched track: update center, inactive=0, duration++"]
+        D5f["unmatched components: create new tracks"]
+        D5g["remove stale tracks if inactive > 5: if counted_in -> people_out++"]
+        D5h["count people_in if duration > 8 and not counted_in"]
+        D5i["collect stable tracks (duration > 4) into person_info[]"]
+        D5j["raw people.people_count = min(stable_count,2)"]
+  end
+ subgraph D6sg["D6: presence_logic_update(raw_count,&presence_state)"]
+        D6b["smoothed_people_count = majority vote over last 10"]
+        D6a["raw_people_count = clamp(raw_count,0..2)"]
+        D6c["presence_detected = (smoothed > 0) (optional hysteresis off by default)"]
+        D6d["pipeline overwrites people.people_count = smoothed"]
+  end
+ subgraph D7sg["D7: classifier"]
+        D7b["process_frame_data(filtered_mm, pixel_distance_bg_mm)"]
+        D7a{"if people_count == 1"}
+        D7c["AI_Run -> ai_out"]
+        D7d["ai_output_moving_average(ai_out) -> class_id"]
+        D7e["zero ai_out; keep history warm; class_id=0"]
+  end
+ subgraph D8sg["D8: output packing"]
+        D8b["output.person_info_count + copy person_info"]
+        D8a["output.people = s_ctx.people"]
+        D8c["output.raw_people_count / smoothed_people_count / presence_detected"]
+        D8d["output.background_collecting=false"]
+  end
+    A["app_main() loop"] --> B["conn_process_pending_commands()"] & C["sensor_try_get_frame(&frame)"]
+    C -- no new frame --> A
+    C -- got frame --> D1["tof_pipeline_process_frame(frame,&output)"]
+    D1 --> Z["conn_publish_frame(mode, frame, &output)"]
+    Z --> A
+    D1a --> D1b
+    D1b -- COLLECTING --> D1c
+    D1c --> LED1
+    LED1 --> RET1
+    D1b -- READY_JUST_FINISHED --> D1d
+    D1d --> LED2
+    LED2 --> RET2
+    D1b -- READY --> D2sg
+    D2sg --> D3sg
+    D3sg --> D4sg
+    D4sg --> D5sg
+    D5sg --> D6sg
+    D6sg --> LED3 & D7sg
+    D7sg --> D8sg
+    D2a --> D2b
+    D2b --> D2c
+    D2c --> D2d
+    D2d -- NO --> D2e
+    D2d -- YES --> D2f
+    D2f --> D2g
+    D2d --> D2h
+    D3a --> D3b
+    D3b --> D3c
+    D3c --> D3d
+    D3d --> D3e
+    D3e -- NO --> D3f
+    D3e -- YES --> D3g
+    D4a --> D4b
+    D4b --> D4c
+    D4c --> D4d
+    D4d -- YES --> D4e
+    D4d -- NO --> D4f
+    D4f --> D4g
+    D4g --> D4h
+    D4h -- YES --> D4i
+    D5a --> D5b
+    D5b --> D5c
+    D5c --> D5d
+    D5d --> D5e & D5f
+    D5f --> D5g
+    D5g --> D5h
+    D5h --> D5i
+    D5i --> D5j
+    D6a --> D6b
+    D6b --> D6c
+    D6c --> D6d
+    D7a -- YES --> D7b
+    D7b --> D7c
+    D7c --> D7d
+    D7a -- NO --> D7e
+    D8a --> D8b
+    D8b --> D8c
+    D8c --> D8d
+    D4e --> D4h
