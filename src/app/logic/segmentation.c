@@ -3,10 +3,23 @@
 #include <stddef.h>
 #include <string.h>
 
+#define SEG_NEIGHBOR_COUNT 8U
+
 typedef struct {
     int row;
     int col;
 } seg_node_t;
+
+static const int8_t s_neighbor_offsets[SEG_NEIGHBOR_COUNT][2] = {
+    {-1,  0},
+    { 1,  0},
+    { 0, -1},
+    { 0,  1},
+    {-1, -1},
+    { 1,  1},
+    { 1, -1},
+    {-1,  1},
+};
 
 static void seg_push_if_valid(seg_node_t *stack,
                               int *top,
@@ -122,15 +135,12 @@ uint8_t seg_label_components(const uint16_t frame_mm[TOF_ROWS][TOF_COLS],
                 visited[cr][cc] = 1U;
                 labels[cr][cc] = current_label;
                 seg_update_component(&components[component_count], frame_mm, cr, cc);
-
-                seg_push_if_valid(stack, &top, cr - 1, cc, visited);
-                seg_push_if_valid(stack, &top, cr + 1, cc, visited);
-                seg_push_if_valid(stack, &top, cr, cc - 1, visited);
-                seg_push_if_valid(stack, &top, cr, cc + 1, visited);
-                seg_push_if_valid(stack, &top, cr - 1, cc - 1, visited);
-                seg_push_if_valid(stack, &top, cr + 1, cc + 1, visited);
-                seg_push_if_valid(stack, &top, cr + 1, cc - 1, visited);
-                seg_push_if_valid(stack, &top, cr - 1, cc + 1, visited);
+                for (uint8_t i = 0; i < SEG_NEIGHBOR_COUNT; i++)
+                {
+                    int nr = cr + s_neighbor_offsets[i][0];
+                    int nc = cc + s_neighbor_offsets[i][1];
+                    seg_push_if_valid(stack, &top, nr, nc, visited);
+                }
             }
 
             if (components[component_count].size >= min_component_size) {

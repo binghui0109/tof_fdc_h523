@@ -24,7 +24,6 @@ static uint8_t presence_majority_vote(uint8_t raw_people_count)
     uint8_t counters[TOF_MAX_PEOPLE_COUNT + 1U] = {0};
     uint8_t result = 0U;
     uint8_t best = 0U;
-
     s_history[s_history_idx] = raw_people_count;
     s_history_idx = (uint8_t)((s_history_idx + 1U) % TOF_HISTORY_SIZE);
     if (s_history_count < TOF_HISTORY_SIZE) {

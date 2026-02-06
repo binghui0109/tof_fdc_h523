@@ -8,9 +8,23 @@
 
 #define AI_BIN_NEAR 1330U
 #define AI_BIN_MID 830U
+#define FALL_STABLE_FRAMES 6U
+
+#define CLASS_LYING 1U
+#define CLASS_2 2U
+#define CLASS_3 3U
+#define CLASS_FALL 4U
+
+typedef enum{
+    LYING = 1U,
+    STANDING,
+    SITTING,
+    FALLING
+} person_state_t;
 
 static float s_ai_input[AI_NETWORK_IN_1_SIZE];
 static float s_output_history[TOF_HISTORY_SIZE][TOF_NUM_CLASSES];
+static float s_output_sum[TOF_NUM_CLASSES];
 static uint8_t s_history_idx = 0U;
 static uint8_t s_history_count = 0U;
 static uint8_t s_previous_class = 0U;
@@ -27,6 +41,7 @@ void classifier_reset(void)
 {
     memset(s_ai_input, 0, sizeof(s_ai_input));
     memset(s_output_history, 0, sizeof(s_output_history));
+    memset(s_output_sum, 0, sizeof(s_output_sum));
     s_history_idx = 0U;
     s_history_count = 0U;
     s_previous_class = 0U;
@@ -34,16 +49,11 @@ void classifier_reset(void)
     s_fall_counter = 0U;
 }
 
-void preprocess_frame_data(const uint16_t filtered_frame_mm[TOF_ROWS][TOF_COLS],
+void preprocess_and_run_ai(const uint16_t filtered_frame_mm[TOF_ROWS][TOF_COLS],
                         const uint16_t pixel_distance_bg_mm[TOF_ROWS][TOF_COLS],
                         float ai_out[TOF_NUM_CLASSES])
 {
     uint16_t ai_idx = 0U;
-
-    if ((filtered_frame_mm == NULL) || (pixel_distance_bg_mm == NULL) || (ai_out == NULL)) {
-        return;
-    }
-
     memset(s_ai_input, 0, sizeof(s_ai_input));
 
     for (uint8_t row = 0U; row < TOF_ROWS; row++) {
@@ -72,42 +82,40 @@ void preprocess_frame_data(const uint16_t filtered_frame_mm[TOF_ROWS][TOF_COLS],
 
 uint8_t ai_output_moving_average(float ai_out[TOF_NUM_CLASSES])
 {
-    float smoothed[TOF_NUM_CLASSES] = {0.0f};
-    uint8_t class_id;
+    uint8_t raw_class_id;
+    uint8_t published_class_id;
 
-    if (ai_out == NULL) {
-        return 0U;
+    if (s_history_count == TOF_HISTORY_SIZE) {
+        for (uint8_t i = 0U; i < TOF_NUM_CLASSES; i++) {
+            s_output_sum[i] -= s_output_history[s_history_idx][i];
+        }
+    } else {
+        s_history_count++;
     }
 
     for (uint8_t i = 0U; i < TOF_NUM_CLASSES; i++) {
         s_output_history[s_history_idx][i] = ai_out[i];
+        s_output_sum[i] += ai_out[i];
     }
 
     s_history_idx = (uint8_t)((s_history_idx + 1U) % TOF_HISTORY_SIZE);
-    if (s_history_count < TOF_HISTORY_SIZE) {
-        s_history_count++;
-    }
-
-    for (uint8_t frame = 0U; frame < s_history_count; frame++) {
-        for (uint8_t i = 0U; i < TOF_NUM_CLASSES; i++) {
-            smoothed[i] += s_output_history[frame][i];
-        }
-    }
 
     for (uint8_t i = 0U; i < TOF_NUM_CLASSES; i++) {
-        ai_out[i] = smoothed[i] / (float)s_history_count;
+        ai_out[i] = s_output_sum[i] / (float)s_history_count;
     }
 
-    class_id = (uint8_t)(argmax(ai_out, TOF_NUM_CLASSES) + 1);
+    raw_class_id = (uint8_t)(argmax(ai_out, TOF_NUM_CLASSES) + 1U);
+    published_class_id = raw_class_id;
 
-    if (((s_previous_class == 2U) || (s_previous_class == 3U)) && (class_id == 1U)) {
+    if (((s_previous_class == STANDING) || (s_previous_class == SITTING)) &&
+        (raw_class_id == LYING)) {
         s_fall_active = 1U;
         s_fall_counter = 1U;
-        class_id = 4U;
-    } else if ((s_fall_active != 0U) && (class_id == 1U)) {
-        class_id = 4U;
+        published_class_id = FALLING;
+    } else if ((s_fall_active != 0U) && (raw_class_id == LYING)) {
+        published_class_id = FALLING;
         s_fall_counter++;
-        if (s_fall_counter >= 6U) {
+        if (s_fall_counter >= FALL_STABLE_FRAMES) {
             s_fall_active = 0U;
             s_fall_counter = 0U;
         }
@@ -116,6 +124,6 @@ uint8_t ai_output_moving_average(float ai_out[TOF_NUM_CLASSES])
         s_fall_counter = 0U;
     }
 
-    s_previous_class = class_id;
-    return class_id;
+    s_previous_class = published_class_id;
+    return published_class_id;
 }

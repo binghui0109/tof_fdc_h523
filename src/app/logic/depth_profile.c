@@ -91,17 +91,17 @@ void depth_profile_generate(const uint16_t frame_mm[TOF_ROWS][TOF_COLS],
                 uint16_t local_max = (uint16_t)lroundf((float)components[c].second_max_distance_mm * scale);
 
                 if (frame_mm[row][col] <= (components[c].min_distance_mm + TOF_DEPTH_THRESHOLD_MM)) {
-                    combined_profile[row][col] = 2U;
+                    combined_profile[row][col] = 2U; // Head or close to head
                 } else {
-                    combined_profile[row][col] = 1U;
+                    combined_profile[row][col] = 1U; // Body
                 }
 
                 if (combined_profile[row][col] == 1U) {
                     uint16_t near_max_threshold = (local_max > 200U) ? (uint16_t)(local_max - 200U) : 0U;
                     if (distance >= near_max_threshold) {
-                        combined_profile[row][col] = 3U;
+                        combined_profile[row][col] = 3U; // Remain body or shoulder
                     } else {
-                        combined_profile[row][col] = 1U;
+                        combined_profile[row][col] = 1U; //close to head region
                     }
                 }
             }

@@ -83,7 +83,7 @@ flowchart TB
         D8c["output.raw_people_count / smoothed_people_count / presence_detected"]
         D8d["output.background_collecting=false"]
   end
-    A["app_main() loop"] --> B["conn_process_pending_commands()"] & C["sensor_try_get_frame(&frame)"]
+    A["app_main() loop"] --> B["conn_process_pending_commands()"] & C["sensor_get_data(&frame)"]
     C -- no new frame --> A
     C -- got frame --> D1["tof_pipeline_process_frame(frame,&output)"]
     D1 --> Z["conn_publish_frame(mode, frame, &output)"]

@@ -30,9 +30,7 @@ static tof_pipeline_context_t s_ctx;
 
 static void tof_pipeline_clear_output(tof_pipeline_output_t *output)
 {
-    if (output != NULL) {
-        memset(output, 0, sizeof(*output));
-    }
+    memset(output, 0, sizeof(*output));
 }
 
 static void tof_pipeline_reset_context(void)
@@ -78,7 +76,7 @@ static void tof_pipeline_run_presence_logic(void)
 static void tof_pipeline_update_classification(void)
 {
     if (s_ctx.people.people_count == 1U) {
-        preprocess_frame_data(s_ctx.filtered_mm, s_ctx.pixel_distance_bg_mm, s_ctx.ai_out);
+        preprocess_and_run_ai(s_ctx.filtered_mm, s_ctx.pixel_distance_bg_mm, s_ctx.ai_out);
         s_ctx.people.class_id = ai_output_moving_average(s_ctx.ai_out);
         return;
     }
@@ -90,10 +88,6 @@ static void tof_pipeline_update_classification(void)
 
 static void tof_pipeline_fill_output(tof_pipeline_output_t *output)
 {
-    if (output == NULL) {
-        return;
-    }
-
     output->background_collecting = false;
     output->raw_people_count = s_ctx.presence_state.raw_people_count;
     output->smoothed_people_count = s_ctx.presence_state.smoothed_people_count;

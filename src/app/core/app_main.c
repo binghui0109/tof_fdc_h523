@@ -33,7 +33,7 @@ void app_main(void)
 
     conn_process_pending_commands();
 
-    if (!sensor_try_get_frame(&frame)) {
+    if (!sensor_get_data(&frame)) {
         return;
     }
 

@@ -7,6 +7,6 @@
 #include "vl53l5cx_api.h"
 
 void sensor_init(void);
-bool sensor_try_get_frame(const VL53L5CX_ResultsData **frame);
+bool sensor_get_data(const VL53L5CX_ResultsData **frame);
 
 #endif
