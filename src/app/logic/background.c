@@ -1,6 +1,6 @@
-#include <string.h>
-#include <math.h>
 #include "background.h"
+#include <math.h>
+#include <string.h>
 #define BG_DEFAULT_FRAMES 100U
 #define MIN_VALID_SAMPLES 1U
 
@@ -16,17 +16,22 @@ static uint32_t s_max_sum = 0U;
 
 static void bg_compute(void)
 {
-    for (uint8_t row = 0U; row < TOF_ROWS; row++) {
-        for (uint8_t col = 0U; col < TOF_COLS; col++) {
+    for (uint8_t row = 0U; row < TOF_ROWS; row++)
+    {
+        for (uint8_t col = 0U; col < TOF_COLS; col++)
+        {
             uint16_t cnt = s_valid_count[row][col];
-            if (cnt >= MIN_VALID_SAMPLES) {
+            if (cnt >= MIN_VALID_SAMPLES)
+            {
                 uint32_t mean = s_sum[row][col] / cnt;
                 uint32_t mean_sq = s_sum_sq[row][col] / cnt;
                 uint32_t sq_mean = mean * mean;
                 uint32_t var = (mean_sq > sq_mean) ? (mean_sq - sq_mean) : 0U;
                 bg.mean[row][col] = mean;
                 bg.std[row][col] = (uint32_t)(sqrt((float)var));
-            } else {
+            }
+            else
+            {
                 bg.std[row][col] = 0U;
                 bg.mean[row][col] = 4000U;
             }
@@ -51,14 +56,14 @@ void bg_collect(const VL53L5CX_ResultsData *tof_result)
 {
     uint16_t frame_max = 0U;
 
-    for (uint8_t row = 0U; row < TOF_ROWS; row++) 
+    for (uint8_t row = 0U; row < TOF_ROWS; row++)
     {
-        for (uint8_t col = 0U; col < TOF_COLS; col++) 
+        for (uint8_t col = 0U; col < TOF_COLS; col++)
         {
             uint8_t idx = (uint8_t)(row * TOF_COLS + col);
             uint8_t status = tof_result->target_status[idx];
 
-            if (status == 255U) 
+            if (status == 255U)
             {
                 continue;
             }
@@ -67,7 +72,7 @@ void bg_collect(const VL53L5CX_ResultsData *tof_result)
             s_sum[row][col] += value;
             s_sum_sq[row][col] += (uint32_t)value * (uint32_t)value;
 
-            if (((status == 5U) || (status == 9U)) && (value > frame_max)) 
+            if (((status == 5U) || (status == 9U)) && (value > frame_max))
             {
                 frame_max = value;
             }
@@ -89,11 +94,11 @@ const bg_info_t *bg_get_info(void)
 
 bool bg_update(const VL53L5CX_ResultsData *tof_result)
 {
-    if (s_collecting) 
+    if (s_collecting)
     {
         bg_collect(tof_result);
         s_collected_frames++;
-        if (s_collected_frames == BG_DEFAULT_FRAMES) 
+        if (s_collected_frames == BG_DEFAULT_FRAMES)
         {
             bg_compute();
             s_collecting = false;

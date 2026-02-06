@@ -12,7 +12,8 @@
 #include "segmentation.h"
 #include "tracking.h"
 
-typedef struct {
+typedef struct
+{
     uint16_t filtered_mm[TOF_ROWS][TOF_COLS];
     uint16_t pixel_distance_bg_mm[TOF_ROWS][TOF_COLS];
     uint8_t labels[TOF_ROWS][TOF_COLS];
@@ -48,23 +49,13 @@ static void tof_pipeline_reset_runtime_modules(void)
 static void tof_pipeline_run_segmentation_tracking(void)
 {
     seg_clear_labels(s_ctx.labels);
-    s_ctx.component_count = seg_label_components(s_ctx.filtered_mm,
-                                                 s_ctx.labels,
-                                                 s_ctx.components,
-                                                 TOF_MAX_COMPONENTS,
-                                                 2U);
+    s_ctx.component_count =
+        seg_label_components(s_ctx.filtered_mm, s_ctx.labels, s_ctx.components, TOF_MAX_COMPONENTS, 2U);
 
-    depth_profile_generate(s_ctx.filtered_mm,
-                           s_ctx.labels,
-                           s_ctx.components,
-                           &s_ctx.component_count,
+    depth_profile_generate(s_ctx.filtered_mm, s_ctx.labels, s_ctx.components, &s_ctx.component_count,
                            s_ctx.depth_profile);
 
-    track_update(s_ctx.components,
-                 s_ctx.component_count,
-                 &s_ctx.people,
-                 s_ctx.person_info,
-                 &s_ctx.person_info_count);
+    track_update(s_ctx.components, s_ctx.component_count, &s_ctx.people, s_ctx.person_info, &s_ctx.person_info_count);
 }
 
 static void tof_pipeline_run_presence_logic(void)
@@ -75,7 +66,8 @@ static void tof_pipeline_run_presence_logic(void)
 
 static void tof_pipeline_update_classification(void)
 {
-    if (s_ctx.people.people_count == 1U) {
+    if (s_ctx.people.people_count == 1U)
+    {
         preprocess_and_run_ai(s_ctx.filtered_mm, s_ctx.pixel_distance_bg_mm, s_ctx.ai_out);
         s_ctx.people.class_id = ai_output_moving_average(s_ctx.ai_out);
         return;
@@ -94,10 +86,9 @@ static void tof_pipeline_fill_output(tof_pipeline_output_t *output)
     output->people = s_ctx.people;
     output->person_info_count = s_ctx.person_info_count;
 
-    if (s_ctx.person_info_count > 0U) {
-        memcpy(output->person_info,
-               s_ctx.person_info,
-               (size_t)s_ctx.person_info_count * sizeof(tof_person_info_t));
+    if (s_ctx.person_info_count > 0U)
+    {
+        memcpy(output->person_info, s_ctx.person_info, (size_t)s_ctx.person_info_count * sizeof(tof_person_info_t));
     }
 }
 

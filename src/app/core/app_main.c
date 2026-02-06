@@ -7,7 +7,8 @@
 #include "sensor_manager.h"
 #include "tof_process.h"
 
-typedef struct {
+typedef struct
+{
     app_mode_t mode;
     tof_pipeline_output_t pipeline_output;
 } app_context_t;
@@ -15,7 +16,6 @@ typedef struct {
 static app_context_t s_app_ctx = {
     .mode = APP_MODE_INFERENCE,
 };
-
 
 void app_init(void)
 {
@@ -33,11 +33,13 @@ void app_main(void)
 
     conn_process_pending_commands();
 
-    if (!sensor_get_data(&frame)) {
+    if (!sensor_get_data(&frame))
+    {
         return;
     }
 
-    switch (s_app_ctx.mode) {
+    switch (s_app_ctx.mode)
+    {
     case APP_MODE_INFERENCE:
         tof_pipeline_process_frame(frame, &s_app_ctx.pipeline_output);
         break;

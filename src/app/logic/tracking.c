@@ -6,7 +6,8 @@
 #define TRACK_COUNT_IN_DURATION_FRAMES 8U
 #define TRACK_MAX_PEOPLE_COUNT 2U
 
-typedef struct {
+typedef struct
+{
     int comp_idx;
     int track_idx;
     uint32_t distance_sq;
@@ -37,9 +38,12 @@ static uint32_t track_component_distance_sq(const tof_component_t *comp, const t
 
 static void track_sort_pairs(track_match_pair_t *pairs, int pair_count)
 {
-    for (int i = 0; i < (pair_count - 1); i++) {
-        for (int j = i + 1; j < pair_count; j++) {
-            if (pairs[i].distance_sq > pairs[j].distance_sq) {
+    for (int i = 0; i < (pair_count - 1); i++)
+    {
+        for (int j = i + 1; j < pair_count; j++)
+        {
+            if (pairs[i].distance_sq > pairs[j].distance_sq)
+            {
                 track_match_pair_t tmp = pairs[i];
                 pairs[i] = pairs[j];
                 pairs[j] = tmp;
@@ -48,22 +52,24 @@ static void track_sort_pairs(track_match_pair_t *pairs, int pair_count)
     }
 }
 
-static void track_collect_people_info(tof_people_data_t *people,
-                                      tof_person_info_t *person_info,
+static void track_collect_people_info(tof_people_data_t *people, tof_person_info_t *person_info,
                                       uint8_t *person_info_count)
 {
     uint8_t stable_count = 0U;
     uint8_t info_count = 0U;
 
-    for (uint8_t i = 0U; i < s_track_count; i++) {
-        if (s_tracks[i].duration_frames > TRACK_STABLE_MIN_DURATION_FRAMES) {
+    for (uint8_t i = 0U; i < s_track_count; i++)
+    {
+        if (s_tracks[i].duration_frames > TRACK_STABLE_MIN_DURATION_FRAMES)
+        {
             person_info[info_count].id = s_tracks[i].id;
             person_info[info_count].x = s_tracks[i].current_col;
             person_info[info_count].y = s_tracks[i].current_row;
             person_info[info_count].duration_frames = s_tracks[i].duration_frames;
             info_count++;
             stable_count++;
-            if (info_count >= TOF_MAX_TRACKS) {
+            if (info_count >= TOF_MAX_TRACKS)
+            {
                 break;
             }
         }
@@ -73,24 +79,26 @@ static void track_collect_people_info(tof_people_data_t *people,
     people->people_count = (stable_count > TRACK_MAX_PEOPLE_COUNT) ? TRACK_MAX_PEOPLE_COUNT : stable_count;
 }
 
-void track_update(const tof_component_t *components,
-                  uint8_t component_count,
-                  tof_people_data_t *people,
-                  tof_person_info_t *person_info,
-                  uint8_t *person_info_count)
+void track_update(const tof_component_t *components, uint8_t component_count, tof_people_data_t *people,
+                  tof_person_info_t *person_info, uint8_t *person_info_count)
 {
     track_match_pair_t pairs[TOF_MAX_COMPONENTS * TOF_MAX_TRACKS];
-    for (uint8_t i = 0U; i < s_track_count; i++) {
-        if (!s_tracks[i].active) {
+    for (uint8_t i = 0U; i < s_track_count; i++)
+    {
+        if (!s_tracks[i].active)
+        {
             continue;
         }
         s_tracks[i].inactive_frames++;
     }
 
     int pair_count = 0;
-    for (uint8_t c = 0U; c < component_count; c++) {
-        for (uint8_t t = 0U; t < s_track_count; t++) {
-            if (!s_tracks[t].active) {
+    for (uint8_t c = 0U; c < component_count; c++)
+    {
+        for (uint8_t t = 0U; t < s_track_count; t++)
+        {
+            if (!s_tracks[t].active)
+            {
                 continue;
             }
             pairs[pair_count].comp_idx = c;
@@ -104,14 +112,17 @@ void track_update(const tof_component_t *components,
     bool comp_matched[TOF_MAX_COMPONENTS] = {false};
     bool track_matched[TOF_MAX_TRACKS] = {false};
 
-    for (int i = 0; i < pair_count; i++) {
+    for (int i = 0; i < pair_count; i++)
+    {
         int c = pairs[i].comp_idx;
         int t = pairs[i].track_idx;
 
-        if (comp_matched[c] || track_matched[t]) {
+        if (comp_matched[c] || track_matched[t])
+        {
             continue;
         }
-        if (pairs[i].distance_sq > s_match_distance_threshold_sq) {
+        if (pairs[i].distance_sq > s_match_distance_threshold_sq)
+        {
             continue;
         }
 
@@ -125,8 +136,10 @@ void track_update(const tof_component_t *components,
         s_tracks[t].duration_frames++;
     }
 
-    for (uint8_t c = 0U; c < component_count; c++) {
-        if (comp_matched[c] || (s_track_count >= TOF_MAX_TRACKS)) {
+    for (uint8_t c = 0U; c < component_count; c++)
+    {
+        if (comp_matched[c] || (s_track_count >= TOF_MAX_TRACKS))
+        {
             continue;
         }
 
@@ -144,15 +157,19 @@ void track_update(const tof_component_t *components,
     }
 
     uint8_t active_count = 0U;
-    for (uint8_t t = 0U; t < s_track_count; t++) {
-        if (!s_tracks[t].active) {
+    for (uint8_t t = 0U; t < s_track_count; t++)
+    {
+        if (!s_tracks[t].active)
+        {
             continue;
         }
 
-        if (s_tracks[t].inactive_frames > TOF_MAX_INACTIVE_FRAMES) {
+        if (s_tracks[t].inactive_frames > TOF_MAX_INACTIVE_FRAMES)
+        {
             s_tracks[t].active = false;
             s_tracks[t].duration_frames = 1U;
-            if (s_tracks[t].counted_in) {
+            if (s_tracks[t].counted_in)
+            {
                 people->people_out++;
             }
             s_tracks[t].counted_in = false;
@@ -160,12 +177,14 @@ void track_update(const tof_component_t *components,
             continue;
         }
 
-        if (!s_tracks[t].counted_in && (s_tracks[t].duration_frames > TRACK_COUNT_IN_DURATION_FRAMES)) {
+        if (!s_tracks[t].counted_in && (s_tracks[t].duration_frames > TRACK_COUNT_IN_DURATION_FRAMES))
+        {
             people->people_in++;
             s_tracks[t].counted_in = true;
         }
 
-        if (t != active_count) {
+        if (t != active_count)
+        {
             s_tracks[active_count] = s_tracks[t];
         }
         active_count++;
