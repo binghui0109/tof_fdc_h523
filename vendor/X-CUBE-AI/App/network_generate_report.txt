@@ -1,6 +1,6 @@
 ST Edge AI Core v1.0.0-19894
-Created date          : 2026-01-30 15:07:24
-Parameters            : generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace14908235620346003385648692254083070 --output C:/Users/binghui.lai/.stm32cubemx/network_output
+Created date          : 2026-02-12 10:58:50
+Parameters            : generate --target stm32h5 --name network -m C:/Users/binghui.lai/ToF_CubeAI/aztech_demo/ToF_model_time_series_people_demo.h5 --compression none --verbosity 1 --allocate-inputs --allocate-outputs --workspace C:/Users/binghui.lai/AppData/Local/Temp/mxAI_workspace25991255911161008798711115278162272 --output C:/Users/binghui.lai/.stm32cubemx/network_output
 
 Exec/report summary (generate)
 -------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ compression        :   none
 options            :   allocate-inputs, allocate-outputs                                                           
 optimization       :   balanced                                                                                    
 target/series      :   stm32h5                                                                                     
-workspace dir      :   C:\Users\binghui.lai\AppData\Local\Temp\mxAI_workspace14908235620346003385648692254083070   
+workspace dir      :   C:\Users\binghui.lai\AppData\Local\Temp\mxAI_workspace25991255911161008798711115278162272   
 output dir         :   C:\Users\binghui.lai\.stm32cubemx\network_output                                            
 model_fmt          :   float                                                                                       
 model_name         :   ToF_model_time_series_people_demo                                                           
