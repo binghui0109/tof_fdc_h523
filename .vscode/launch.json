@@ -15,7 +15,7 @@
             "servertype": "jlink",
             "device": "STM32H523CE",
             "toolchainPath": "${workspaceFolder}/tools/gcc/bin",
-            "ipAddress": "192.168.1.107"
+            "ipAddress": "192.168.1.101"
         }
     ]
 }

@@ -61,6 +61,52 @@ Each stage must expose clear input/output data and avoid hidden cross-stage glob
 - Add lightweight per-stage counters/flags for debug builds (dropped frame, invalid status, component_count, active_tracks).
 - Keep telemetry optional and isolated from core logic.
 
+### 6) Complexity Reduction (CodeScene Hotspots)
+- Prioritize complexity reduction in:
+  - `seg_label_components(...)` (`src/app/logic/segmentation.c`)
+  - `depth_profile_generate(...)` (`src/app/logic/depth_profile.c`)
+  - `track_update(...)` (`src/app/logic/tracking.c`)
+- Keep orchestration functions thin and phase-based. A single function should orchestrate steps, not implement all branch logic.
+- Target thresholds:
+  - orchestration functions: cyclomatic complexity <= 12
+  - helper functions: cyclomatic complexity <= 8
+  - preferred nesting depth <= 3
+
+#### Segmentation Refactor Rules
+- Split into explicit helpers:
+  - seed/scan candidate pixel
+  - flood-fill component
+  - component accept/reject finalize
+- Replace repeated 8-neighbor push calls with a static offset table loop.
+- Avoid full-frame relabel cleanup on reject when possible; clear only touched pixels of current component.
+- Preserve deterministic behavior: same min size filter, same max component cap, same 8-neighbor connectivity.
+
+#### Depth Profile Refactor Rules
+- Split pixel classification into helper(s): compute scale, classify depth class, optional refine.
+- Precompute row-related values where practical to reduce repeated branches in inner loops.
+- Keep split fallback behavior explicit and isolated:
+  - first split attempt using profile `2` (head-like)
+  - fallback using profile `1` (body-like), preserving current behavior unless intentionally changed.
+- If fallback criteria are changed (e.g., include `3`), document expected behavior impact.
+
+#### Tracking Refactor Rules
+- Split `track_update(...)` into phase helpers:
+  - age active tracks
+  - build match pairs
+  - apply greedy matches
+  - spawn unmatched tracks
+  - retire + compact tracks
+  - collect output info
+- Prefer squared-distance compare for matching threshold to avoid `sqrtf` in hot path.
+- Replace magic thresholds with named constants in module scope (`stable_frames`, `count_in_frames`, etc.).
+- Preserve current people in/out semantics unless explicitly requested to tune behavior.
+
+#### Safe Refactor Order (Required)
+1. Refactor `track_update(...)` into helper phases with no behavior change.
+2. Refactor `seg_label_components(...)` flood-fill and neighbor handling.
+3. Refactor `depth_profile_generate(...)` classification helpers.
+4. Re-evaluate complexity metrics and only then consider behavior-level tuning.
+
 ## Layering Rules (Must Follow)
 - `src/app/core/*`: orchestration + runtime flow + communication/sensor managers.
 - `src/app/logic/*`: pure detection/analytics logic with explicit inputs/outputs.

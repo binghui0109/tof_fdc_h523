@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "bsp_serial.h"
+#include "pb_manager.h"
 #include "vl53l5cx.h"
 
 #define CONN_PACKET_MAX_SIZE 220U
@@ -330,6 +331,7 @@ void conn_publish_frame(app_mode_t app_mode, const VL53L5CX_ResultsData *raw_fra
     if (app_mode == APP_MODE_INFERENCE)
     {
         conn_send_data_frame_inference(raw_frame, pipeline_output);
+        send_pb_result(raw_frame, pipeline_output);
         return;
     }
 
@@ -337,4 +339,5 @@ void conn_publish_frame(app_mode_t app_mode, const VL53L5CX_ResultsData *raw_fra
     {
         conn_send_data_frame_record(raw_frame);
     }
+
 }

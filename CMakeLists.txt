@@ -52,6 +52,8 @@ file(GLOB_RECURSE VENDOR_SOURCES CONFIGURE_DEPENDS
     ${HOME}/middleware/ai/*.c
     ${APP}/app/*.c
     ${APP}/bsp/*.c
+    ${HOME}/library/nanopb/*.c
+    ${HOME}/library/nanopb/generate/*.c
 )
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
@@ -69,6 +71,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${APP}/app
     ${APP}/app/core
     ${APP}/app/logic
+    ${HOME}/library/nanopb/generate
+    ${HOME}/library/nanopb
+
 )
 
 # Add project symbols (macros)

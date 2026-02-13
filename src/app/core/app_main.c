@@ -6,6 +6,8 @@
 #include "connection_manager.h"
 #include "sensor_manager.h"
 #include "tof_process.h"
+#include "pb_manager.h"
+#include "usart.h"
 
 typedef struct
 {
@@ -16,6 +18,9 @@ typedef struct
 static app_context_t s_app_ctx = {
     .mode = APP_MODE_INFERENCE,
 };
+
+uint8_t received_data[12] = {1};
+volatile uint8_t test = 0;
 
 void app_init(void)
 {
@@ -42,6 +47,7 @@ void app_main(void)
     {
     case APP_MODE_INFERENCE:
         tof_pipeline_process_frame(frame, &s_app_ctx.pipeline_output);
+        send_pb_result(frame, &s_app_ctx.pipeline_output);
         break;
     case APP_MODE_DATA_RECORD:
         break;
