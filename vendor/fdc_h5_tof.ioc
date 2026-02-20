@@ -123,6 +123,7 @@ NVIC.TIM6_IRQn=true\:0\:0\:false\:false\:true\:true\:true\:true
 NVIC.TimeBase=TIM15_IRQn
 NVIC.TimeBaseIP=TIM15
 NVIC.USART1_IRQn=true\:0\:0\:false\:false\:true\:true\:true\:true
+NVIC.USB_DRD_FS_IRQn=true\:0\:0\:false\:false\:true\:true\:true\:true
 NVIC.UsageFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 PA0.GPIOParameters=GPIO_Label
 PA0.GPIO_Label=VL53_INT
